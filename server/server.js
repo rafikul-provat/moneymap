@@ -25,8 +25,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://your-frontend-domain.onrender.com",
-      "https://yourcustomdomain.com"
+      "https://moneymap.com",
+      "https://customdom.com"
     ],
     credentials: true,
   })
