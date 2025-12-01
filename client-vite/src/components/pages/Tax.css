@@ -1,0 +1,4 @@
+.tax-card { background:#fff; padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(3,7,18,0.04); max-width:640px; }
+.big { font-size:22px; font-weight:700; margin-top:6px; color:#10b981; }
+.big.red { color:#ef4444; }
+.muted { color:#6b7280; margin-top:12px; }

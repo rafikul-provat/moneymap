@@ -1,0 +1,135 @@
+/* MAIN SIDEBAR */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  color: #374151;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* COLLAPSED STATE */
+.sidebar.collapsed {
+  width: 72px;
+}
+
+/* BRAND */
+.brand {
+  display: flex;
+  align-items: center;
+  padding: 18px;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+}
+
+.brand h1 {
+  font-size: 1.2rem;
+  margin-left: 12px;
+  font-weight: 600;
+  color: #1f2937;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+/* Hide brand text when collapsed */
+.sidebar.collapsed .brand h1 {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Menu button */
+.menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4b5563;
+  padding: 6px;
+}
+
+/* NAV LINKS */
+.nav {
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 22px;
+  margin: 6px 10px;
+  text-decoration: none;
+  color: #4b5563;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: 0.25s ease;
+  white-space: nowrap;
+}
+
+/* Hover look */
+.nav a:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+/* Active link look */
+.nav a.active {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-left: 3px solid #0284c7;
+  font-weight: 600;
+}
+
+/* ----------- COLLAPSED NAV ----------- */
+
+.sidebar.collapsed .nav a {
+  justify-content: center;
+  padding: 14px 0;
+  margin: 6px 12px;
+}
+
+/* Hide text, keep only icons */
+.sidebar.collapsed .nav a span {
+  display: none;
+}
+
+/* Center the icons nicely */
+.sidebar.collapsed .nav a svg {
+  margin: 0 auto;
+}
+
+/* FOOTER LOGOUT */
+.footer {
+  margin-top: auto;
+  padding: 20px;
+}
+
+.logout {
+  width: 100%;
+  background: #ef4444;
+  border: none;
+  padding: 12px 15px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: 0.25s ease;
+}
+
+/* Hover logout */
+.logout:hover {
+  background: #dc2626;
+}
+
+/* Collapse logout text */
+.sidebar.collapsed .logout span {
+  display: none;
+}
