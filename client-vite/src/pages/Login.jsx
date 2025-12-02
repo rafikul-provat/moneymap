@@ -17,10 +17,8 @@ const Login = ({ onLoginSuccess }) => {
     setError("");
 
     try {
-      const res = await api.post("/auth/login", {
-  email,
-  password
-});
+      await api.post("/auth/login", { email, password });
+
 
       // 🔥 Save REAL MongoDB userId
       localStorage.setItem("token", res.data.token);
