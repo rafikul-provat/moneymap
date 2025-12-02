@@ -18,8 +18,8 @@ const Signup = () => {
     setError("");
 
     try {
-      const res = await api.post("/auth/signup", {
-      username,
+      const res = await api.post("/auth/register", {
+      username: name,
       email,
       password
 });
