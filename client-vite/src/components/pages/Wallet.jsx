@@ -1,6 +1,5 @@
-// client/src/components/pages/Wallet.js
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/api/axiosConfig";
 import Sidebar from "../Sidebar";
 import "./Wallet.css";
 
@@ -14,14 +13,14 @@ const Wallet = () => {
 
   const [accounts, setAccounts] = useState([]);
 
-  // ADD ACCOUNT MODAL
+  // Add modal
   const [showAddModal, setShowAddModal] = useState(false);
   const [accType, setAccType] = useState("Bank");
   const [accProvider, setAccProvider] = useState("");
   const [accNumber, setAccNumber] = useState("");
   const [accBalance, setAccBalance] = useState("");
 
-  // EDIT ACCOUNT MODAL
+  // Edit modal
   const [showEditModal, setShowEditModal] = useState(false);
   const [editId, setEditId] = useState("");
   const [editType, setEditType] = useState("");
@@ -29,20 +28,15 @@ const Wallet = () => {
   const [editNumber, setEditNumber] = useState("");
   const [editBalance, setEditBalance] = useState("");
 
-  const token = localStorage.getItem("token");
-
-  // ---------------------------------------------------------
-  // LOAD YEAR SUMMARY
-  // ---------------------------------------------------------
+  /* ---------------------------------------------------------
+     LOAD YEAR SUMMARY
+  --------------------------------------------------------- */
   const loadYearSummary = async () => {
     try {
       const now = new Date();
       const year = now.getFullYear();
 
-      const res = await axios.get(
-        `http://localhost:5000/transactions/yearly-summary?year=${year}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await api.get(`/transactions/yearly-summary?year=${year}`);
 
       const income = res.data.totalIncome || 0;
       const expense = res.data.totalExpense || 0;
@@ -68,35 +62,29 @@ const Wallet = () => {
     }
   };
 
-  // ---------------------------------------------------------
-  // LOAD ACCOUNTS
-  // ---------------------------------------------------------
+  /* ---------------------------------------------------------
+     LOAD ACCOUNTS
+  --------------------------------------------------------- */
   const loadAccounts = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/wallet/accounts", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/wallet/accounts");
       setAccounts(res.data || []);
     } catch (err) {
       console.error("Account load error:", err);
     }
   };
 
-  // ---------------------------------------------------------
-  // ADD ACCOUNT
-  // ---------------------------------------------------------
+  /* ---------------------------------------------------------
+     ADD ACCOUNT
+  --------------------------------------------------------- */
   const addAccount = async () => {
     try {
-      await axios.post(
-        "http://localhost:5000/wallet/accounts",
-        {
-          type: accType,
-          provider: accProvider,
-          number: accNumber,
-          balance: Number(accBalance),
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post("/wallet/accounts", {
+        type: accType,
+        provider: accProvider,
+        number: accNumber,
+        balance: Number(accBalance),
+      });
 
       setShowAddModal(false);
       setAccProvider("");
@@ -110,9 +98,9 @@ const Wallet = () => {
     }
   };
 
-  // ---------------------------------------------------------
-  // OPEN EDIT MODAL
-  // ---------------------------------------------------------
+  /* ---------------------------------------------------------
+     OPEN EDIT MODAL
+  --------------------------------------------------------- */
   const openEdit = (acc) => {
     setEditId(acc._id);
     setEditType(acc.type);
@@ -122,21 +110,17 @@ const Wallet = () => {
     setShowEditModal(true);
   };
 
-  // ---------------------------------------------------------
-  // SAVE EDITED ACCOUNT
-  // ---------------------------------------------------------
+  /* ---------------------------------------------------------
+     UPDATE ACCOUNT
+  --------------------------------------------------------- */
   const updateAccount = async () => {
     try {
-      await axios.put(
-        `http://localhost:5000/wallet/accounts/${editId}`,
-        {
-          type: editType,
-          provider: editProvider,
-          number: editNumber,
-          balance: Number(editBalance),
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.put(`/wallet/accounts/${editId}`, {
+        type: editType,
+        provider: editProvider,
+        number: editNumber,
+        balance: Number(editBalance),
+      });
 
       setShowEditModal(false);
       loadAccounts();
@@ -146,16 +130,14 @@ const Wallet = () => {
     }
   };
 
-  // ---------------------------------------------------------
-  // DELETE ACCOUNT
-  // ---------------------------------------------------------
+  /* ---------------------------------------------------------
+     DELETE ACCOUNT
+  --------------------------------------------------------- */
   const deleteAccount = async (id) => {
     if (!window.confirm("Delete this account?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/wallet/accounts/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/wallet/accounts/${id}`);
       loadAccounts();
     } catch (err) {
       console.error("Delete error:", err);
@@ -181,16 +163,13 @@ const Wallet = () => {
 
           <div className="wallet-details">
             <div>
-              Yearly Income:
-              <strong className="inc"> {formatBD(yearIncome)}</strong>
+              Yearly Income: <strong className="inc">{formatBD(yearIncome)}</strong>
             </div>
             <div>
-              Yearly Expense:
-              <strong className="exp"> {formatBD(yearExpense)}</strong>
+              Yearly Expense: <strong className="exp">{formatBD(yearExpense)}</strong>
             </div>
             <div>
-              Income Tax:
-              <strong className="tax"> {formatBD(tax)}</strong>
+              Income Tax: <strong className="tax">{formatBD(tax)}</strong>
             </div>
           </div>
         </div>
@@ -233,17 +212,11 @@ const Wallet = () => {
               <h3>Add Account</h3>
 
               <label>Type</label>
-<select
-  value={accType}
-  onChange={(e) => setAccType(e.target.value)}
-  required
->
-  <option value="" disabled>Select Type</option> {/* ⭐ This will display */}
-  <option value="Bond">Bond</option>
-  <option value="Bank">Bank</option>
-  <option value="MFS">MFS</option>
-</select>
-
+              <select value={accType} onChange={(e) => setAccType(e.target.value)}>
+                <option value="Bank">Bank</option>
+                <option value="MFS">MFS</option>
+                <option value="Bond">Bond</option>
+              </select>
 
               <label>Provider</label>
               <input value={accProvider} onChange={(e) => setAccProvider(e.target.value)} />
@@ -252,11 +225,19 @@ const Wallet = () => {
               <input value={accNumber} onChange={(e) => setAccNumber(e.target.value)} />
 
               <label>Balance</label>
-              <input type="number" value={accBalance} onChange={(e) => setAccBalance(e.target.value)} />
+              <input
+                type="number"
+                value={accBalance}
+                onChange={(e) => setAccBalance(e.target.value)}
+              />
 
               <div className="modal-actions">
-                <button className="save-btn" onClick={addAccount}>Save</button>
-                <button className="cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+                <button className="save-btn" onClick={addAccount}>
+                  Save
+                </button>
+                <button className="cancel-btn" onClick={() => setShowAddModal(false)}>
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
@@ -269,17 +250,11 @@ const Wallet = () => {
               <h3>Edit Account</h3>
 
               <label>Type</label>
-<select
-  value={editType}
-  onChange={(e) => setEditType(e.target.value)}
-  required
->
-  <option value="" disabled>Select Type</option>
-  <option value="Bond">Bond</option>
-  <option value="Bank">Bank</option>
-  <option value="MFS">MFS</option>
-</select>
-
+              <select value={editType} onChange={(e) => setEditType(e.target.value)}>
+                <option value="Bank">Bank</option>
+                <option value="MFS">MFS</option>
+                <option value="Bond">Bond</option>
+              </select>
 
               <label>Provider</label>
               <input value={editProvider} onChange={(e) => setEditProvider(e.target.value)} />
@@ -288,16 +263,23 @@ const Wallet = () => {
               <input value={editNumber} onChange={(e) => setEditNumber(e.target.value)} />
 
               <label>Balance</label>
-              <input type="number" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} />
+              <input
+                type="number"
+                value={editBalance}
+                onChange={(e) => setEditBalance(e.target.value)}
+              />
 
               <div className="modal-actions">
-                <button className="save-btn" onClick={updateAccount}>Update</button>
-                <button className="cancel-btn" onClick={() => setShowEditModal(false)}>Cancel</button>
+                <button className="save-btn" onClick={updateAccount}>
+                  Update
+                </button>
+                <button className="cancel-btn" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </button>
               </div>
             </div>
           </div>
         )}
-
       </main>
     </div>
   );
