@@ -19,18 +19,17 @@ const Login = ({ onLoginSuccess }) => {
   try {
     const res = await api.post("/auth/login", { email, password });
 
-    // Save token + user data
     localStorage.setItem("token", res.data.token);
     localStorage.setItem("userId", res.data.userId);
     localStorage.setItem("username", res.data.username);
 
     onLoginSuccess(res.data.username);
     navigate("/dashboard");
-
   } catch (err) {
     setError("Invalid email or password");
   }
 };
+
 
   return (
     <div
