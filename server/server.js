@@ -21,10 +21,16 @@ const app = express();
 // ------------------------------
 // CORS CONFIG (IMPORTANT FOR HOSTING)
 // ------------------------------
-app.use(cors({
-  origin: ["http://localhost:5173", "https://your-frontend.netlify.app"],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://dainty-gumdrop-19b227.netlify.app",  
+    ],
+    credentials: true,
+  })
+);
+
 
 
 // ------------------------------
