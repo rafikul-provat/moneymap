@@ -13,25 +13,24 @@ const Login = ({ onLoginSuccess }) => {
   const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      await api.post("/auth/login", { email, password });
+  try {
+    const res = await api.post("/auth/login", { email, password });
 
+    // Save token + user data
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("userId", res.data.userId);
+    localStorage.setItem("username", res.data.username);
 
-      // 🔥 Save REAL MongoDB userId
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("userId", res.data.userId);     // CRITICAL FIX
-      localStorage.setItem("username", res.data.username);
+    onLoginSuccess(res.data.username);
+    navigate("/dashboard");
 
-      onLoginSuccess(res.data.username);
-      navigate("/dashboard");
-
-    } catch (err) {
-      setError("Invalid email or password");
-    }
-  };
+  } catch (err) {
+    setError("Invalid email or password");
+  }
+};
 
   return (
     <div
