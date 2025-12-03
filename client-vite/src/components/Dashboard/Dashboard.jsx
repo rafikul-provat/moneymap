@@ -123,7 +123,13 @@ const expense = monthlyTx
         </div>
 
         <h3 style={{ marginTop: 30 }}>Recent Transactions</h3>
-        <TransactionList transactions={transactions} />
+        <TransactionList
+         transactions={transactions}
+           onDelete={(id) => {
+            setTransactions((prev) => prev.filter((t) => t._id !== id));
+           loadMonthly();
+         }}
+/>
       </div>
 
       {/* INCOME MODAL */}
