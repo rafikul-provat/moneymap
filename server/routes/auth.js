@@ -56,4 +56,49 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// GOOGLE LOGIN / SIGNUP
+router.post("/google", async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    // Verify Google ID token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    // Extract user info
+    const { email, name, picture } = ticket.getPayload();
+
+    // Find or create user
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        username: name,
+        email,
+        provider: "google",
+        avatar: picture,
+      });
+    }
+
+    // Create JWT
+    const jwtToken = jwt.sign(
+      { userId: user._id, username: user.username },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      token: jwtToken,
+      userId: user._id,
+      username: user.username,
+    });
+  } catch (err) {
+    console.error("Google Auth Error:", err);
+    res.status(401).json({ message: "Google authentication failed" });
+  }
+});
+
+
 export default router;
