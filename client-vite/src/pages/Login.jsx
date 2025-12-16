@@ -11,7 +11,9 @@ const Login = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Google callback
+  // -----------------------------
+  // GOOGLE LOGIN CALLBACK
+  // -----------------------------
   const handleGoogleResponse = async (response) => {
     try {
       const res = await api.post("/auth/google", {
@@ -25,15 +27,18 @@ const Login = ({ onLoginSuccess }) => {
       onLoginSuccess(res.data.username);
       navigate("/dashboard");
     } catch (err) {
+      console.error(err);
       setError("Google login failed");
     }
   };
 
-  // 🔹 Init Google Button
+  // -----------------------------
+  // INIT GOOGLE SIGN-IN
+  // -----------------------------
   useEffect(() => {
-    if (window.google) {
+    if (window.google && import.meta.env.VITE_GOOGLE_CLIENT_ID) {
       window.google.accounts.id.initialize({
-        client_id: "YOUR_GOOGLE_CLIENT_ID",
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID, // ✅ FIXED
         callback: handleGoogleResponse,
       });
 
@@ -48,6 +53,9 @@ const Login = ({ onLoginSuccess }) => {
     }
   }, []);
 
+  // -----------------------------
+  // EMAIL / PASSWORD LOGIN
+  // -----------------------------
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -117,7 +125,7 @@ const Login = ({ onLoginSuccess }) => {
               style={{
                 position: "absolute",
                 right: "14px",
-                top: "35%",
+                top: "15%",
                 cursor: "pointer",
                 fontSize: "22px",
               }}
@@ -131,19 +139,19 @@ const Login = ({ onLoginSuccess }) => {
           </button>
         </form>
 
-        {/* 🔹 Divider */}
+        {/* Divider */}
         <div style={{ textAlign: "center", margin: "15px 0" }}>
           — OR —
         </div>
 
-        {/* 🔹 Google Button */}
+        {/* Google Button */}
         <div
           id="googleBtn"
           style={{ display: "flex", justifyContent: "center" }}
         ></div>
 
         <p style={{ textAlign: "center", marginTop: "10px" }}>
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <span
             style={{ color: "#facc15", cursor: "pointer" }}
             onClick={() => navigate("/signup")}
@@ -156,6 +164,9 @@ const Login = ({ onLoginSuccess }) => {
   );
 };
 
+// -----------------------------
+// STYLES
+// -----------------------------
 const inputStyle = {
   width: "100%",
   padding: "12px",
