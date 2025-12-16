@@ -125,7 +125,7 @@ const Login = ({ onLoginSuccess }) => {
               style={{
                 position: "absolute",
                 right: "14px",
-                top: "15%",
+                top: "10%",
                 cursor: "pointer",
                 fontSize: "22px",
               }}
