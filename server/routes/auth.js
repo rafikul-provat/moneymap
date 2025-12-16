@@ -2,9 +2,10 @@ import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import { OAuth2Client } from "google-auth-library";
 
 const router = express.Router();
-
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // REGISTER
 router.post("/register", async (req, res) => {
   try {
