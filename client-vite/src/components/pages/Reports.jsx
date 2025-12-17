@@ -59,32 +59,86 @@ const exportPDF = () => {
   }
 
   const doc = new jsPDF("p", "mm", "a4");
+  let y = 15;
 
+  // ---------------- HEADER ----------------
   doc.setFontSize(18);
-  doc.text("Money Map - Monthly Report", 14, 20);
+  doc.setFont("helvetica", "bold");
+  doc.text("Money Map", 14, y);
 
   doc.setFontSize(12);
-  doc.text(`Month: ${month}`, 14, 32);
-  doc.text(`Total Income: ৳ ${summary.totalIncome}`, 14, 40);
-  doc.text(`Total Expense: ৳ ${summary.totalExpense}`, 14, 48);
-  doc.text(`Net Savings: ৳ ${summary.wallet}`, 14, 56);
+  doc.setFont("helvetica", "normal");
+  y += 8;
+  doc.text("Monthly Account Statement", 14, y);
 
-  const tableData = transactions.map((t) => [
-    t.date.slice(0, 10),
-    t.title,
-    t.type,
-    t.category || "-",
-    `৳ ${t.amount}`,
-  ]);
+  y += 6;
+  doc.text(`Statement Period: ${month}`, 14, y);
 
-  autoTable(doc, {
-    startY: 65,
-    head: [["Date", "Title", "Type", "Category", "Amount"]],
-    body: tableData,
+  y += 6;
+  doc.text(`Generated On: ${new Date().toLocaleDateString()}`, 14, y);
+
+  // ---------------- SUMMARY BOX ----------------
+  y += 10;
+  doc.setDrawColor(0);
+  doc.rect(14, y, 182, 26);
+
+  doc.setFontSize(11);
+  doc.text(`Total Income: ৳ ${summary.totalIncome}`, 18, y + 8);
+  doc.text(`Total Expense: ৳ ${summary.totalExpense}`, 18, y + 15);
+
+  doc.text(
+    `Closing Balance: ৳ ${summary.wallet}`,
+    120,
+    y + 12
+  );
+
+  // ---------------- TRANSACTION TABLE ----------------
+  let balance = 0;
+  const tableData = transactions.map((t) => {
+    if (t.type === "Income") balance += t.amount;
+    else balance -= t.amount;
+
+    return [
+      t.date.slice(0, 10),
+      t.title,
+      t.type === "Expense" ? `৳ ${t.amount}` : "",
+      t.type === "Income" ? `৳ ${t.amount}` : "",
+      `৳ ${balance}`,
+    ];
   });
 
-  doc.save(`MoneyMap_${month}_Report.pdf`);
+  autoTable(doc, {
+    startY: y + 35,
+    head: [["Date", "Description", "Debit", "Credit", "Balance"]],
+    body: tableData,
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [37, 99, 235], // Bank blue
+      textColor: 255,
+      halign: "center",
+    },
+    columnStyles: {
+      2: { halign: "right" },
+      3: { halign: "right" },
+      4: { halign: "right" },
+    },
+    theme: "grid",
+  });
+
+  // ---------------- FOOTER ----------------
+  doc.setFontSize(9);
+  doc.text(
+    "This is a system generated statement. No signature is required.",
+    14,
+    290
+  );
+
+  doc.save(`MoneyMap_Statement_${month}.pdf`);
 };
+
 
 
   // ---------------- LOAD REPORT ----------------
