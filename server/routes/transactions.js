@@ -285,4 +285,26 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const tx = await Transaction.findById(id);
+
+    if (!tx) return res.status(404).json({ msg: "Transaction not found" });
+
+    // ensure logged-in user owns it
+    if (tx.userId.toString() !== req.user.userId) {
+      return res.status(401).json({ msg: "Unauthorized" });
+    }
+
+    await tx.deleteOne();
+    res.json({ msg: "Transaction deleted successfully" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Failed to delete" });
+  }
+});
+
 export default router;

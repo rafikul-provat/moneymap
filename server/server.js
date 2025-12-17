@@ -24,8 +24,13 @@ const app = express();
 app.use(
   cors({
     origin: [
+<<<<<<< HEAD
       "http://localhost:5173",
       "https://moneymap-gnak.onrender.com"
+=======
+      "https://moneymap-frontend-emut.onrender.com",
+      "http://localhost:5173"
+>>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
     ],
     credentials: true,
   })
