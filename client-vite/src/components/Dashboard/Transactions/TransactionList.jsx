@@ -1,20 +1,33 @@
 import React from "react";
+import api from "@/api/axiosConfig";
 
-const TransactionList = ({ transactions }) => {
+const TransactionList = ({ transactions, onDelete }) => {
+  const token = localStorage.getItem("token");
+
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
 
-  // Format to YYYY-MM
   const thisMonthKey = `${currentYear}-${currentMonth}`;
+  const thisMonthTx = transactions.filter((t) => t.date?.startsWith(thisMonthKey));
 
-  // 🔥 Filter this month's transactions
-  const thisMonthTx = transactions.filter((t) =>
-    t.date?.startsWith(thisMonthKey)
-  );
-
-  // Show latest 5
   const recent = thisMonthTx.slice(0, 5);
+
+  // 🔥 DELETE FUNCTION
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this transaction?")) return;
+
+    try {
+      await api.delete(`/transactions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      onDelete(id); // update UI in Dashboard
+    } catch (err) {
+      console.error("Delete failed:", err);
+      alert("Failed to delete transaction");
+    }
+  };
 
   return (
     <>
@@ -55,6 +68,21 @@ const TransactionList = ({ transactions }) => {
           font-weight: 600;
         }
 
+        .delete-btn {
+          background: #ef4444;
+          color: #fff;
+          border: none;
+          padding: 6px 10px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: 0.2s;
+        }
+
+        .delete-btn:hover {
+          background: #dc2626;
+        }
+
         .no-data {
           text-align: center;
           padding: 20px;
@@ -69,13 +97,14 @@ const TransactionList = ({ transactions }) => {
             <th>Amount</th>
             <th>Type</th>
             <th>Date</th>
+            <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
           {recent.length === 0 ? (
             <tr>
-              <td colSpan="4" className="no-data">
+              <td colSpan="5" className="no-data">
                 No transactions this month
               </td>
             </tr>
@@ -86,6 +115,15 @@ const TransactionList = ({ transactions }) => {
                 <td>৳ {t.amount}</td>
                 <td className={t.type}>{t.type}</td>
                 <td>{t.date?.slice(0, 10)}</td>
+
+                <td>
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(t._id)}
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))
           )}

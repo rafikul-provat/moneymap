@@ -1,8 +1,16 @@
 import express from "express";
 import Transaction from "../models/Transaction.js";
 import authMiddleware from "../middleware/auth.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import User from "../models/User.js";
 
-const router = express.Router();
+const router = express.Router(); // ✅ THIS LINE WAS MISSING
+
+// ===============================
+// ⚠️ UNUSUAL TRANSACTION THRESHOLD
+// ===============================
+const UNUSUAL_AMOUNT = 20000;
+
 
 // ------------------------------
 // ADD TRANSACTION
@@ -11,11 +19,12 @@ router.post("/", authMiddleware, async (req, res) => {
   try {
     const { title, amount, type, note, category, date } = req.body;
 
-    // Check date format
+    // Validate date format
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return res.status(400).json({ message: "Invalid date format" });
     }
 
+    // Save transaction
     const tx = await Transaction.create({
       userId: req.user.userId,
       title,
@@ -26,12 +35,42 @@ router.post("/", authMiddleware, async (req, res) => {
       date,
     });
 
+    // ===============================
+    // ⚠️ UNUSUAL TRANSACTION EMAIL
+    // ===============================
+    if (type === "Expense" && Number(amount) >= UNUSUAL_AMOUNT) {
+      const user = await User.findById(req.user.userId);
+
+      if (user && user.email) {
+        // 🔒 Email failure will NOT break transaction
+        sendEmail({
+          to: user.email,
+          subject: "⚠️ Unusual Transaction Alert - Money Map",
+          html: `
+            <h2>Security Alert</h2>
+            <p>An unusual expense was detected on your Money Map account.</p>
+            <p><b>Amount:</b> ${amount} BDT</p>
+            <p><b>Threshold:</b> ${UNUSUAL_AMOUNT} BDT</p>
+            <p><b>Category:</b> ${category || "N/A"}</p>
+            <p><b>Date:</b> ${date}</p>
+            <br/>
+            <p>If this was NOT you, please change your password immediately.</p>
+            <br/>
+            <b>— Money Map Security Team</b>
+          `,
+        }).catch(err =>
+          console.error("Alert email failed:", err.message)
+        );
+      }
+    }
+
     res.json(tx);
   } catch (err) {
     console.error("POST Transaction Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 router.get("/monthly/:year/:month", authMiddleware, async (req, res) => {
   try {
@@ -222,6 +261,27 @@ router.get("/:userId", authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("GET Transactions Error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const tx = await Transaction.findById(id);
+
+    if (!tx) return res.status(404).json({ msg: "Transaction not found" });
+
+    // ensure logged-in user owns it
+    if (tx.userId.toString() !== req.user.userId) {
+      return res.status(401).json({ msg: "Unauthorized" });
+    }
+
+    await tx.deleteOne();
+    res.json({ msg: "Transaction deleted successfully" });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: "Failed to delete" });
   }
 });
 

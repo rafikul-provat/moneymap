@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import bgImage from "../assets/auth-bg.jpg";
 import api from "../api/axiosConfig";
 
-
 const Signup = () => {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const handleSignup = async (e) => {
@@ -19,11 +19,10 @@ const Signup = () => {
 
     try {
       const res = await api.post("/auth/register", {
-      username: name,
-      email,
-      password
-});
-
+        username: name,
+        email,
+        password,
+      });
 
       navigate("/login");
     } catch (err) {
@@ -82,6 +81,7 @@ const Signup = () => {
         )}
 
         <form onSubmit={handleSignup}>
+          {/* Full Name */}
           <input
             type="text"
             placeholder="Full Name"
@@ -92,6 +92,7 @@ const Signup = () => {
             required
           />
 
+          {/* Email */}
           <input
             type="email"
             placeholder="Email"
@@ -102,15 +103,34 @@ const Signup = () => {
             required
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="input-anim"
-            style={inputStyle}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          {/* Password + Eye Icon */}
+          <div style={{ position: "relative", width: "100%" }}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="input-anim"
+              style={inputStyle}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: "absolute",
+                right: "14px",
+                top: "35%",
+                transform: "translateY(-50%)",
+                cursor: "pointer",
+                userSelect: "none",
+                fontSize: "24px",
+                color: "#555",
+              }}
+            >
+              {showPassword ? "🙊" : "🙈"}
+            </span>
+          </div>
 
           <button type="submit" className="btn-anim" style={btnStyle}>
             Create Account
@@ -148,7 +168,6 @@ const Signup = () => {
           100% { transform: translateX(0); }
         }
 
-        /* Input glow without shifting */
         .input-anim:focus {
           outline: none;
           border-color: #10b981 !important;
@@ -158,13 +177,11 @@ const Signup = () => {
           transition: 0.25s ease;
         }
 
-        /* Button hover */
         .btn-anim:hover {
           transform: scale(1.07);
           transition: 0.25s ease;
         }
 
-        /* Button click */
         .btn-anim:active {
           transform: scale(0.94);
         }
@@ -178,10 +195,10 @@ const inputStyle = {
   padding: "12px",
   marginBottom: "18px",
   borderRadius: "10px",
-  border: "1px solid rgba(0,0,0,0.3)",  // dark border for white box
+  border: "1px solid rgba(0,0,0,0.3)",
   fontSize: "1rem",
-  background: "#ffffff",                 // FULL WHITE INPUT BOX ✔
-  color: "#000000",                      // Black text for visibility
+  background: "#ffffff",
+  color: "#000000",
   boxSizing: "border-box",
   transition: "0.25s ease",
 };

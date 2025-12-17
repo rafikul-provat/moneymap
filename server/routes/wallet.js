@@ -1,90 +1,38 @@
-// server/routes/walletRoutes.js
-
 import express from "express";
+import WalletAccount from "../models/WalletAccount.js";
 import authMiddleware from "../middleware/auth.js";
-import Account from "../models/Account.js";
 
 const router = express.Router();
 
-/* ----------------------------------------------------
-   GET ALL ACCOUNTS OF LOGGED-IN USER
----------------------------------------------------- */
+// GET accounts
 router.get("/accounts", authMiddleware, async (req, res) => {
-  try {
-    const accounts = await Account.find({ userId: req.user.userId });
-    res.json(accounts);
-  } catch (err) {
-    console.error("Load accounts error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+  const accounts = await WalletAccount.find({ userId: req.user.userId });
+  res.json(accounts);
 });
 
-/* ----------------------------------------------------
-   ADD NEW ACCOUNT
----------------------------------------------------- */
+// ADD account
 router.post("/accounts", authMiddleware, async (req, res) => {
-  try {
-    const { type, provider, number, balance } = req.body;
-
-    const acc = await Account.create({
-      userId: req.user.userId,
-      type,
-      provider,
-      number,
-      balance,
-    });
-
-    res.json(acc);
-  } catch (err) {
-    console.error("Add account error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+  const acc = await WalletAccount.create({
+    userId: req.user.userId,
+    ...req.body,
+  });
+  res.json(acc);
 });
 
-/* ----------------------------------------------------
-   UPDATE ACCOUNT
----------------------------------------------------- */
+// UPDATE account
 router.put("/accounts/:id", authMiddleware, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { type, provider, number, balance } = req.body;
-
-    const acc = await Account.findOneAndUpdate(
-      { _id: id, userId: req.user.userId },
-      { type, provider, number, balance },
-      { new: true }
-    );
-
-    if (!acc) {
-      return res.status(404).json({ message: "Account not found" });
-    }
-
-    res.json(acc);
-  } catch (err) {
-    console.error("Update account error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+  const acc = await WalletAccount.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+  res.json(acc);
 });
 
-/* ----------------------------------------------------
-   DELETE ACCOUNT
----------------------------------------------------- */
+// DELETE account
 router.delete("/accounts/:id", authMiddleware, async (req, res) => {
-  try {
-    const acc = await Account.findOneAndDelete({
-      _id: req.params.id,
-      userId: req.user.userId,
-    });
-
-    if (!acc) {
-      return res.status(404).json({ message: "Account not found" });
-    }
-
-    res.json({ message: "Account deleted" });
-  } catch (err) {
-    console.error("Delete account error:", err);
-    res.status(500).json({ message: "Server error" });
-  }
+  await WalletAccount.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
 
 export default router;

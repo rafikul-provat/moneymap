@@ -3,22 +3,37 @@ import React from "react";
 const SummaryBox = ({ label, value, type }) => {
   return (
     <>
-      <div className={`summary-box ${type}`}>
-        <div className="summary-label">{label}</div>
-        <div className="summary-value">৳ {value.toLocaleString()}</div>
+      <div className="summary-container">
+        <div className={`summary-box ${type}`}>
+          <div className="summary-label">{label}</div>
+          <div className="summary-value">৳ {value.toLocaleString()}</div>
+        </div>
       </div>
 
       <style>{`
+        /* WRAPPER: Makes boxes stay in one row and wrap on mobile */
+        .summary-container {
+          display: flex;
+          gap: 20px;
+          flex-wrap: wrap;
+          width: 100%;
+        }
+
         .summary-box {
           padding: 20px;
           border-radius: 14px;
           color: #fff;
           min-height: 110px;
+
           display: flex;
           flex-direction: column;
           justify-content: center;
+
           box-shadow: 0 8px 25px rgba(0,0,0,0.08);
           transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+          flex: 1;
+          min-width: 180px;     /* Ensures good size on all screens */
         }
 
         .summary-box:hover {
@@ -47,7 +62,11 @@ const SummaryBox = ({ label, value, type }) => {
           background: linear-gradient(135deg, #ef4444, #f87171);
         }
 
-        /* Responsive */
+        .balance {
+          background: linear-gradient(135deg, #6366f1, #818cf8);
+        }
+
+        /* RESPONSIVE */
         @media (max-width: 600px) {
           .summary-box {
             min-height: 90px;
