@@ -38,31 +38,39 @@ router.post("/", authMiddleware, async (req, res) => {
     // ===============================
     // ⚠️ UNUSUAL TRANSACTION EMAIL
     // ===============================
-    if (type === "Expense" && Number(amount) >= UNUSUAL_AMOUNT) {
-      const user = await User.findById(req.user.userId);
+    if (
+  type?.toLowerCase() === "expense" &&
+  Number(amount) >= UNUSUAL_AMOUNT
+) {
+  console.log("⚠️ Unusual expense detected:", amount);
 
-      if (user && user.email) {
-        // 🔒 Email failure will NOT break transaction
-        sendEmail({
-          to: user.email,
-          subject: "⚠️ Unusual Transaction Alert - Money Map",
-          html: `
-            <h2>Security Alert</h2>
-            <p>An unusual expense was detected on your Money Map account.</p>
-            <p><b>Amount:</b> ${amount} BDT</p>
-            <p><b>Threshold:</b> ${UNUSUAL_AMOUNT} BDT</p>
-            <p><b>Category:</b> ${category || "N/A"}</p>
-            <p><b>Date:</b> ${date}</p>
-            <br/>
-            <p>If this was NOT you, please change your password immediately.</p>
-            <br/>
-            <b>— Money Map Security Team</b>
-          `,
-        }).catch(err =>
-          console.error("Alert email failed:", err.message)
-        );
-      }
+  const user = await User.findById(req.user.userId);
+
+  if (user?.email) {
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "⚠️ Unusual Transaction Alert - Money Map",
+        html: `
+          <h2>Security Alert</h2>
+          <p>An unusual expense was detected on your Money Map account.</p>
+          <p><b>Amount:</b> ${amount} BDT</p>
+          <p><b>Threshold:</b> ${UNUSUAL_AMOUNT} BDT</p>
+          <p><b>Category:</b> ${category || "N/A"}</p>
+          <p><b>Date:</b> ${date}</p>
+          <br/>
+          <p>If this was NOT you, please change your password immediately.</p>
+          <br/>
+          <b>— Money Map Security Team</b>
+        `,
+      });
+
+      console.log("📧 Unusual expense email sent");
+    } catch (err) {
+      console.error("❌ Alert email failed:", err.message);
     }
+  }
+}
 
     res.json(tx);
   } catch (err) {

@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import api from "@/api/axiosConfig";
 import Sidebar from "../Sidebar";
+
+// ✅ ADD THESE TWO LINES
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
 import {
   ResponsiveContainer,
   BarChart,
@@ -47,6 +52,41 @@ const Reports = () => {
     wallet: 0,
   });
   const [loading, setLoading] = useState(false);
+const exportPDF = () => {
+  if (!transactions.length) {
+    alert("No data to export");
+    return;
+  }
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(18);
+  doc.text("Money Map - Monthly Report", 14, 20);
+
+  doc.setFontSize(12);
+  doc.text(`Month: ${month}`, 14, 32);
+  doc.text(`Total Income: ৳ ${summary.totalIncome}`, 14, 44);
+  doc.text(`Total Expense: ৳ ${summary.totalExpense}`, 14, 52);
+  doc.text(`Net Savings: ৳ ${summary.wallet}`, 14, 60);
+
+  const tableData = transactions.map((t) => [
+    t.date.slice(0, 10),
+    t.title,
+    t.type,
+    t.category || "-",
+    `৳ ${t.amount}`,
+  ]);
+
+  doc.autoTable({
+    startY: 70,
+    head: [["Date", "Title", "Type", "Category", "Amount"]],
+    body: tableData,
+    styles: { fontSize: 10 },
+    headStyles: { fillColor: [59, 130, 246] },
+  });
+
+  doc.save(`MoneyMap_${month}_Report.pdf`);
+ };
 
   // ---------------- LOAD REPORT ----------------
   useEffect(() => {
@@ -137,29 +177,48 @@ const Reports = () => {
 
           {/* MONTH SELECTOR */}
           <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: 25,
-            }}
-          >
-            <div>
-              <label style={{ marginRight: 12, fontWeight: 500 }}>
-                Select Month:
-              </label>
-              <input
-                type="month"
-                value={month}
-                onChange={(e) => setMonth(e.target.value)}
-                style={{
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  border: "1px solid #CBD5E1",
-                  fontSize: 15,
-                }}
-              />
-            </div>
-          </div>
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 25,
+  }}
+>
+  {/* MONTH SELECTOR */}
+  <div>
+    <label style={{ marginRight: 12, fontWeight: 500 }}>
+      Select Month:
+    </label>
+    <input
+      type="month"
+      value={month}
+      onChange={(e) => setMonth(e.target.value)}
+      style={{
+        padding: "10px 14px",
+        borderRadius: 10,
+        border: "1px solid #CBD5E1",
+        fontSize: 15,
+      }}
+    />
+  </div>
+
+  {/* EXPORT PDF BUTTON */}
+  <button
+    onClick={exportPDF}
+    style={{
+      padding: "10px 16px",
+      background: "#2563EB",
+      color: "white",
+      border: "none",
+      borderRadius: 10,
+      cursor: "pointer",
+      fontWeight: 500,
+    }}
+  >
+    📄 Export PDF
+  </button>
+</div>
+
 
           {/* ---------------- SUMMARY CARDS ---------------- */}
           <div
