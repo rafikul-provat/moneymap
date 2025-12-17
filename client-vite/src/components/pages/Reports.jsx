@@ -4,7 +4,7 @@ import Sidebar from "../Sidebar";
 
 // ✅ ADD THESE TWO LINES
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 import {
   ResponsiveContainer,
