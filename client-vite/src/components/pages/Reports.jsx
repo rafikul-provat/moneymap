@@ -58,16 +58,16 @@ const exportPDF = () => {
     return;
   }
 
-  const doc = new jsPDF();
+  const doc = new jsPDF("p", "mm", "a4");
 
   doc.setFontSize(18);
   doc.text("Money Map - Monthly Report", 14, 20);
 
   doc.setFontSize(12);
   doc.text(`Month: ${month}`, 14, 32);
-  doc.text(`Total Income: ৳ ${summary.totalIncome}`, 14, 44);
-  doc.text(`Total Expense: ৳ ${summary.totalExpense}`, 14, 52);
-  doc.text(`Net Savings: ৳ ${summary.wallet}`, 14, 60);
+  doc.text(`Total Income: ৳ ${summary.totalIncome}`, 14, 40);
+  doc.text(`Total Expense: ৳ ${summary.totalExpense}`, 14, 48);
+  doc.text(`Net Savings: ৳ ${summary.wallet}`, 14, 56);
 
   const tableData = transactions.map((t) => [
     t.date.slice(0, 10),
@@ -77,16 +77,15 @@ const exportPDF = () => {
     `৳ ${t.amount}`,
   ]);
 
-  doc.autoTable({
-    startY: 70,
+  autoTable(doc, {
+    startY: 65,
     head: [["Date", "Title", "Type", "Category", "Amount"]],
     body: tableData,
-    styles: { fontSize: 10 },
-    headStyles: { fillColor: [59, 130, 246] },
   });
 
   doc.save(`MoneyMap_${month}_Report.pdf`);
- };
+};
+
 
   // ---------------- LOAD REPORT ----------------
   useEffect(() => {
