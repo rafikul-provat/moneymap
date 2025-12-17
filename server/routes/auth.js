@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { OAuth2Client } from "google-auth-library";
-<<<<<<< HEAD
 import { sendEmail } from "../utils/sendEmail.js";
 
 const router = express.Router();
@@ -12,12 +11,6 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // --------------------
 // REGISTER (EMAIL + PASSWORD)
 // --------------------
-=======
-
-const router = express.Router();
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-// REGISTER
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
 router.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -86,38 +79,21 @@ router.post("/login", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 // --------------------
 // GOOGLE LOGIN / SIGNUP
 // --------------------
-=======
-// GOOGLE LOGIN / SIGNUP
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
 router.post("/google", async (req, res) => {
   try {
     const { token } = req.body;
-
-<<<<<<< HEAD
-=======
-    // Verify Google ID token
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-<<<<<<< HEAD
     const { email, name, picture } = ticket.getPayload();
 
     let user = await User.findOne({ email });
     let isNewUser = false;
-=======
-    // Extract user info
-    const { email, name, picture } = ticket.getPayload();
-
-    // Find or create user
-    let user = await User.findOne({ email });
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
 
     if (!user) {
       user = await User.create({
@@ -126,7 +102,6 @@ router.post("/google", async (req, res) => {
         provider: "google",
         avatar: picture,
       });
-<<<<<<< HEAD
       isNewUser = true;
     }
 
@@ -145,11 +120,6 @@ router.post("/google", async (req, res) => {
       });
     }
 
-=======
-    }
-
-    // Create JWT
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
     const jwtToken = jwt.sign(
       { userId: user._id, username: user.username },
       process.env.JWT_SECRET,
@@ -166,9 +136,4 @@ router.post("/google", async (req, res) => {
     res.status(401).json({ message: "Google authentication failed" });
   }
 });
-
-<<<<<<< HEAD
-=======
-
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
 export default router;

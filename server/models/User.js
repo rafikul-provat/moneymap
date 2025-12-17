@@ -14,10 +14,6 @@ const UserSchema = new mongoose.Schema(
       enum: ["local", "google"],
       default: "local",
     },
-<<<<<<< HEAD
-
-=======
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
     avatar: {
       type: String,
     },

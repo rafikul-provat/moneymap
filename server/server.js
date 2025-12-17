@@ -19,18 +19,13 @@ dotenv.config();
 const app = express();
 
 // ------------------------------
-// CORS CONFIG (IMPORTANT FOR HOSTING)
+// CORS CONFIG
 // ------------------------------
 app.use(
   cors({
     origin: [
-<<<<<<< HEAD
       "http://localhost:5173",
-      "https://moneymap-gnak.onrender.com"
-=======
       "https://moneymap-frontend-emut.onrender.com",
-      "http://localhost:5173"
->>>>>>> c56a79dcf3298de5d0121ced1b3136a56cccebca
     ],
     credentials: true,
   })
@@ -58,4 +53,6 @@ app.use("/wallet", walletRoutes);
 // SERVER START
 // ------------------------------
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);
