@@ -30,8 +30,8 @@ const COLORS = [
   "#8B5CF6", // Violet
 ];
 
-const formatBDT = (amount) =>
-  `BDT ${Number(amount || 0).toLocaleString("en-IN")}`;
+const formatCurrency = (n) =>
+  n == null ? "৳ 0" : `৳ ${Number(n).toLocaleString()}`;
 
 const Reports = () => {
   const token = localStorage.getItem("token");
@@ -53,23 +53,20 @@ const Reports = () => {
   });
   const [loading, setLoading] = useState(false);
 const exportPDF = () => {
-  if (!transactions || transactions.length === 0) {
+  if (!transactions.length) {
     alert("No data to export");
     return;
   }
 
   const doc = new jsPDF("p", "mm", "a4");
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
   let y = 15;
 
-  // ---------- HEADER ----------
-  doc.setFont("helvetica", "bold");
+  // ---------------- HEADER ----------------
   doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
   doc.text("Money Map", 14, y);
 
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
   y += 8;
   doc.text("Monthly Account Statement", 14, y);
@@ -80,65 +77,67 @@ const exportPDF = () => {
   y += 6;
   doc.text(`Generated On: ${new Date().toLocaleDateString()}`, 14, y);
 
-  // ---------- OPENING BALANCE ----------
-  const openingBalance =
-    (summary.wallet || 0) -
-    (summary.totalIncome || 0) +
-    (summary.totalExpense || 0);
-
+  // ---------------- SUMMARY BOX ----------------
   y += 10;
-  doc.rect(14, y, 182, 30);
+  doc.setDrawColor(0);
+  doc.rect(14, y, 182, 26);
 
-  doc.text(`Opening Balance: ${formatBDT(openingBalance)}`, 18, y + 8);
-  doc.text(`Total Income: ${formatBDT(summary.totalIncome)}`, 18, y + 15);
-  doc.text(`Total Expense: ${formatBDT(summary.totalExpense)}`, 18, y + 22);
+  doc.setFontSize(11);
+  doc.text(`Total Income: ৳ ${summary.totalIncome}`, 18, y + 8);
+  doc.text(`Total Expense: ৳ ${summary.totalExpense}`, 18, y + 15);
+
   doc.text(
-    `Closing Balance: ${formatBDT(summary.wallet)}`,
+    `Closing Balance: ৳ ${summary.wallet}`,
     120,
-    y + 15
+    y + 12
   );
 
-  // ---------- TABLE ----------
-  let runningBalance = openingBalance;
-
+  // ---------------- TRANSACTION TABLE ----------------
+  let balance = 0;
   const tableData = transactions.map((t) => {
-    if (t.type === "Income") runningBalance += t.amount;
-    else runningBalance -= t.amount;
+    if (t.type === "Income") balance += t.amount;
+    else balance -= t.amount;
 
     return [
-      t.date?.slice(0, 10),
-      t.title || "",
-      t.type === "Expense" ? formatBDT(t.amount) : "",
-      t.type === "Income" ? formatBDT(t.amount) : "",
-      formatBDT(runningBalance),
+      t.date.slice(0, 10),
+      t.title,
+      t.type === "Expense" ? `৳ ${t.amount}` : "",
+      t.type === "Income" ? `৳ ${t.amount}` : "",
+      `৳ ${balance}`,
     ];
   });
 
   autoTable(doc, {
-    startY: y + 40,
-    head: [["Date", "Description", "Debit (BDT)", "Credit (BDT)", "Balance"]],
+    startY: y + 35,
+    head: [["Date", "Description", "Debit", "Credit", "Balance"]],
     body: tableData,
-    styles: { fontSize: 9 },
+    styles: {
+      fontSize: 10,
+      cellPadding: 3,
+    },
+    headStyles: {
+      fillColor: [37, 99, 235], // Bank blue
+      textColor: 255,
+      halign: "center",
+    },
     columnStyles: {
       2: { halign: "right" },
       3: { halign: "right" },
       4: { halign: "right" },
     },
-    didDrawPage: () => {
-      const pageNo = doc.internal.getNumberOfPages();
-      doc.setFontSize(9);
-      doc.text(
-        `Page ${pageNo}`,
-        pageWidth / 2,
-        pageHeight - 10,
-        { align: "center" }
-      );
-    },
+    theme: "grid",
   });
+
+  // ---------------- FOOTER ----------------
+  doc.setFontSize(9);
+  doc.text(
+    "This is a system generated statement. No signature is required.",
+    14,
+    290
+  );
 
   doc.save(`MoneyMap_Statement_${month}.pdf`);
 };
-
 
 
 
