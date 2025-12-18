@@ -30,8 +30,20 @@ const COLORS = [
   "#8B5CF6", // Violet
 ];
 
-const formatCurrency = (n) =>
-  n == null ? "৳ 0" : `৳ ${Number(n).toLocaleString()}`;
+// ---- PDF helpers ----
+const formatBDT = (amount) =>
+  `BDT ${Number(amount || 0).toLocaleString("en-IN")}`;
+
+// Calculate opening balance
+const calculateOpeningBalance = (transactions) => {
+  let balance = 0;
+  transactions.forEach((t) => {
+    if (t.type === "Income") balance += t.amount;
+    else balance -= t.amount;
+  });
+  return balance;
+};
+
 
 const Reports = () => {
   const token = localStorage.getItem("token");
