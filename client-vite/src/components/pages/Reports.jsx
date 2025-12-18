@@ -30,20 +30,8 @@ const COLORS = [
   "#8B5CF6", // Violet
 ];
 
-// ---- PDF helpers ----
 const formatBDT = (amount) =>
   `BDT ${Number(amount || 0).toLocaleString("en-IN")}`;
-
-// Calculate opening balance
-const calculateOpeningBalance = (transactions) => {
-  let balance = 0;
-  transactions.forEach((t) => {
-    if (t.type === "Income") balance += t.amount;
-    else balance -= t.amount;
-  });
-  return balance;
-};
-
 
 const Reports = () => {
   const token = localStorage.getItem("token");
@@ -65,7 +53,7 @@ const Reports = () => {
   });
   const [loading, setLoading] = useState(false);
 const exportPDF = () => {
-  if (!transactions.length) {
+  if (!transactions || transactions.length === 0) {
     alert("No data to export");
     return;
   }
@@ -76,38 +64,31 @@ const exportPDF = () => {
 
   let y = 15;
 
-  // ---------------- LOGO ----------------
-  try {
-    doc.addImage(LOGO_BASE64, "PNG", 14, y, 25, 25);
-  } catch (e) {
-    console.warn("Logo not loaded");
-  }
-
-  // ---------------- HEADER ----------------
+  // ---------- HEADER ----------
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text("Money Map", 45, y + 10);
+  doc.text("Money Map", 14, y);
 
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text("Monthly Account Statement", 45, y + 18);
+  y += 8;
+  doc.text("Monthly Account Statement", 14, y);
 
-  y += 30;
+  y += 6;
   doc.text(`Statement Period: ${month}`, 14, y);
+
   y += 6;
   doc.text(`Generated On: ${new Date().toLocaleDateString()}`, 14, y);
 
-  // ---------------- OPENING BALANCE ----------------
+  // ---------- OPENING BALANCE ----------
   const openingBalance =
-    summary.wallet -
-    summary.totalIncome +
-    summary.totalExpense;
+    (summary.wallet || 0) -
+    (summary.totalIncome || 0) +
+    (summary.totalExpense || 0);
 
   y += 10;
-  doc.setDrawColor(0);
   doc.rect(14, y, 182, 30);
 
-  doc.setFontSize(11);
   doc.text(`Opening Balance: ${formatBDT(openingBalance)}`, 18, y + 8);
   doc.text(`Total Income: ${formatBDT(summary.totalIncome)}`, 18, y + 15);
   doc.text(`Total Expense: ${formatBDT(summary.totalExpense)}`, 18, y + 22);
@@ -117,7 +98,7 @@ const exportPDF = () => {
     y + 15
   );
 
-  // ---------------- TRANSACTION TABLE ----------------
+  // ---------- TABLE ----------
   let runningBalance = openingBalance;
 
   const tableData = transactions.map((t) => {
@@ -125,8 +106,8 @@ const exportPDF = () => {
     else runningBalance -= t.amount;
 
     return [
-      t.date.slice(0, 10),
-      t.title,
+      t.date?.slice(0, 10),
+      t.title || "",
       t.type === "Expense" ? formatBDT(t.amount) : "",
       t.type === "Income" ? formatBDT(t.amount) : "",
       formatBDT(runningBalance),
@@ -135,30 +116,16 @@ const exportPDF = () => {
 
   autoTable(doc, {
     startY: y + 40,
-    head: [["Date", "Description", "Debit (BDT)", "Credit (BDT)", "Balance (BDT)"]],
+    head: [["Date", "Description", "Debit (BDT)", "Credit (BDT)", "Balance"]],
     body: tableData,
-    styles: {
-      fontSize: 9,
-      cellPadding: 3,
-    },
-    headStyles: {
-      fillColor: [37, 99, 235],
-      textColor: 255,
-      halign: "center",
-    },
+    styles: { fontSize: 9 },
     columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 60 },
-      2: { halign: "right", cellWidth: 30 },
-      3: { halign: "right", cellWidth: 30 },
-      4: { halign: "right", cellWidth: 32 },
+      2: { halign: "right" },
+      3: { halign: "right" },
+      4: { halign: "right" },
     },
-    theme: "grid",
-
-    // -------- PAGE NUMBER FOOTER --------
-    didDrawPage: (data) => {
+    didDrawPage: () => {
       const pageNo = doc.internal.getNumberOfPages();
-
       doc.setFontSize(9);
       doc.text(
         `Page ${pageNo}`,
@@ -166,17 +133,12 @@ const exportPDF = () => {
         pageHeight - 10,
         { align: "center" }
       );
-
-      doc.text(
-        "System generated statement – no signature required",
-        14,
-        pageHeight - 10
-      );
     },
   });
 
   doc.save(`MoneyMap_Statement_${month}.pdf`);
 };
+
 
 
 
