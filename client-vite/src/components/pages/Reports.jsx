@@ -2,10 +2,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import api from "@/api/axiosConfig";
 import Sidebar from "../Sidebar";
 
-// ✅ ADD THESE TWO LINES
+// PDF
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// Charts
 import {
   ResponsiveContainer,
   BarChart,
@@ -20,27 +21,16 @@ import {
   Legend,
 } from "recharts";
 
-// PREMIUM COLORS
-const COLORS = [
-  "#6366F1", // Indigo
-  "#06B6D4", // Cyan
-  "#EC4899", // Pink
-  "#F59E0B", // Amber
-  "#10B981", // Emerald
-  "#8B5CF6", // Violet
-];
+// COLORS
+const COLORS = ["#6366F1", "#06B6D4", "#EC4899", "#F59E0B", "#10B981", "#8B5CF6"];
 
+// Currency
 const formatBDT = (n) => `BDT ${Number(n || 0).toLocaleString("en-IN")}`;
 
 const Reports = () => {
-  const token = localStorage.getItem("token");
-
   const [month, setMonth] = useState(() => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   });
 
   const [transactions, setTransactions] = useState([]);
@@ -50,134 +40,150 @@ const Reports = () => {
     totalExpense: 0,
     wallet: 0,
   });
-  const [loading, setLoading] = useState(false);
-const exportPDF = () => {
-  if (!transactions.length) {
-    alert("No data to export");
-    return;
-  }
 
-  const doc = new jsPDF("p", "mm", "a4");
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+  /* ================= LOAD REPORT ================= */
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await api.get(`/transactions/monthly-report?month=${month}`);
+        setTransactions(res.data.transactions || []);
+        setCategoryData(res.data.categoryBreakdown || []);
+        setSummary({
+          totalIncome: res.data.totalIncome || 0,
+          totalExpense: res.data.totalExpense || 0,
+          wallet: res.data.wallet || 0,
+        });
+      } catch (err) {
+        console.error("Report load failed:", err);
+      }
+    };
 
-  let y = 15;
+    load();
+  }, [month]);
 
-  /* ================= HEADER ================= */
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
-  doc.text("Money Map", 14, y);
+  /* ================= PDF EXPORT ================= */
+  const exportPDF = () => {
+    if (!transactions.length) {
+      alert("No data to export");
+      return;
+    }
 
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
-  y += 8;
-  doc.text("Monthly Account Statement", 14, y);
+    const doc = new jsPDF("p", "mm", "a4");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-  y += 6;
-  doc.text(`Statement Period: ${month}`, 14, y);
+    let y = 15;
 
-  y += 6;
-  doc.text(`Generated On: ${new Date().toLocaleDateString()}`, 14, y);
+    // HEADER
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.text("Money Map", 14, y);
 
-  y += 6;
-  doc.text(
-    `Statement ID: MM-${month.replace("-", "")}-${Date.now()
-      .toString()
-      .slice(-4)}`,
-    14,
-    y
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    y += 8;
+    doc.text("Monthly Account Statement", 14, y);
+    y += 6;
+    doc.text(`Statement Period: ${month}`, 14, y);
+    y += 6;
+    doc.text(`Generated On: ${new Date().toLocaleDateString()}`, 14, y);
+
+    // SUMMARY BOX
+    y += 10;
+    doc.rect(14, y, pageWidth - 28, 32);
+
+    const openingBalance =
+      summary.wallet - summary.totalIncome + summary.totalExpense;
+
+    doc.text(`Opening Balance: ${formatBDT(openingBalance)}`, 18, y + 10);
+    doc.text(`Total Credit: ${formatBDT(summary.totalIncome)}`, 18, y + 18);
+    doc.text(`Total Debit: ${formatBDT(summary.totalExpense)}`, 18, y + 26);
+
+    doc.setFont("helvetica", "bold");
+    doc.text(
+      `Closing Balance: ${formatBDT(summary.wallet)}`,
+      pageWidth - 95,
+      y + 18
+    );
+    doc.setFont("helvetica", "normal");
+
+    // SORT TRANSACTIONS (BANK STYLE)
+    let runningBalance = openingBalance;
+    const sortedTransactions = [...transactions].sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
+    );
+
+    const rows = sortedTransactions.map((t) => {
+      if (t.type === "Income") runningBalance += t.amount;
+      else runningBalance -= t.amount;
+
+      return [
+        t.date.slice(0, 10),
+        t.title,
+        t.type === "Expense" ? formatBDT(t.amount) : "",
+        t.type === "Income" ? formatBDT(t.amount) : "",
+        formatBDT(runningBalance),
+      ];
+    });
+
+    autoTable(doc, {
+      startY: y + 40,
+      head: [["Date", "Description", "Debit", "Credit", "Balance"]],
+      body: rows,
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 4 },
+      headStyles: {
+        fillColor: [30, 64, 175],
+        textColor: 255,
+        halign: "center",
+      },
+      columnStyles: {
+        0: { halign: "center", cellWidth: 28 },
+        1: { cellWidth: 55 },
+        2: { halign: "right" },
+        3: { halign: "right" },
+        4: { halign: "right", fontStyle: "bold" },
+      },
+      didDrawPage: () => {
+        doc.setFontSize(9);
+        doc.text(
+          "This is a system generated statement. No signature required.",
+          14,
+          pageHeight - 10
+        );
+        doc.text(
+          `Page ${doc.internal.getNumberOfPages()}`,
+          pageWidth - 30,
+          pageHeight - 10
+        );
+      },
+    });
+
+    doc.save(`MoneyMap_Statement_${month}.pdf`);
+  };
+
+  return (
+    <div style={{ display: "flex", height: "100vh" }}>
+      <Sidebar />
+
+      <main style={{ flex: 1, padding: 32, overflowY: "auto" }}>
+        <h2>📊 Monthly Financial Report</h2>
+
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+          />
+
+          <button onClick={exportPDF} style={{ padding: 10 }}>
+            📄 Export PDF
+          </button>
+        </div>
+      </main>
+    </div>
   );
-
-  /* ================= SUMMARY BOX ================= */
-  y += 10;
-  doc.setDrawColor(0);
-  doc.setLineWidth(0.5);
-  doc.rect(14, y, pageWidth - 28, 32);
-
-  // Opening balance calculation (bank style)
-  const openingBalance =
-    summary.wallet - summary.totalIncome + summary.totalExpense;
-
-  doc.setFontSize(11);
-  doc.text(`Opening Balance: ${formatBDT(openingBalance)}`, 18, y + 10);
-  doc.text(`Total Credit: ${formatBDT(summary.totalIncome)}`, 18, y + 18);
-  doc.text(`Total Debit: ${formatBDT(summary.totalExpense)}`, 18, y + 26);
-
-  doc.setFont("helvetica", "bold");
-  doc.text(
-    `Closing Balance: ${formatBDT(summary.wallet)}`,
-    pageWidth - 95,
-    y + 18
-  );
-  doc.setFont("helvetica", "normal");
-
-  /* ================= TRANSACTION TABLE ================= */
-  let runningBalance = openingBalance;
-
-  const tableRows = transactions.map((t) => {
-    if (t.type === "Income") runningBalance += t.amount;
-    else runningBalance -= t.amount;
-
-    return [
-      t.date.slice(0, 10),
-      t.title,
-      t.type === "Expense" ? formatBDT(t.amount) : "",
-      t.type === "Income" ? formatBDT(t.amount) : "",
-      formatBDT(runningBalance),
-    ];
-  });
-
-  autoTable(doc, {
-    startY: y + 40,
-    head: [["Date", "Description", "Debit", "Credit", "Balance"]],
-    body: tableRows,
-    theme: "grid",
-
-    styles: {
-      fontSize: 10,
-      cellPadding: 4,
-      valign: "middle",
-    },
-
-    headStyles: {
-      fillColor: [30, 64, 175], // Bank blue
-      textColor: 255,
-      fontStyle: "bold",
-      halign: "center",
-    },
-
-    columnStyles: {
-      0: { halign: "center", cellWidth: 28 },
-      1: { halign: "left", cellWidth: 55 },
-      2: { halign: "right" },
-      3: { halign: "right" },
-      4: { halign: "right", fontStyle: "bold" },
-    },
-
-    alternateRowStyles: {
-      fillColor: [248, 250, 252],
-    },
-
-    didDrawPage: () => {
-      doc.setFontSize(9);
-      doc.text(
-        "This is a system generated statement. No signature required.",
-        14,
-        pageHeight - 10
-      );
-
-      doc.text(
-        `Page ${doc.internal.getNumberOfPages()}`,
-        pageWidth - 30,
-        pageHeight - 10
-      );
-    },
-  });
-
-  /* ================= SAVE ================= */
-  doc.save(`MoneyMap_Official_Statement_${month}.pdf`);
 };
-
 
   // ---------------- LOAD REPORT ----------------
   useEffect(() => {
