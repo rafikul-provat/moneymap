@@ -30,8 +30,7 @@ const COLORS = [
   "#8B5CF6", // Violet
 ];
 
-const formatCurrency = (n) =>
-  n == null ? "৳ 0" : `৳ ${Number(n).toLocaleString()}`;
+const formatBDT = (n) => `BDT ${Number(n || 0).toLocaleString("en-IN")}`;
 
 const Reports = () => {
   const token = localStorage.getItem("token");
@@ -64,7 +63,7 @@ const exportPDF = () => {
 
   let y = 15;
 
-  // ================= HEADER =================
+  /* ================= HEADER ================= */
   doc.setFont("helvetica", "bold");
   doc.setFontSize(20);
   doc.text("Money Map", 14, y);
@@ -82,45 +81,49 @@ const exportPDF = () => {
 
   y += 6;
   doc.text(
-    `Statement ID: MM-${month.replace("-", "")}-${Date.now().toString().slice(-4)}`,
+    `Statement ID: MM-${month.replace("-", "")}-${Date.now()
+      .toString()
+      .slice(-4)}`,
     14,
     y
   );
 
-  // ================= SUMMARY BOX =================
+  /* ================= SUMMARY BOX ================= */
   y += 10;
   doc.setDrawColor(0);
   doc.setLineWidth(0.5);
   doc.rect(14, y, pageWidth - 28, 32);
 
-  const openingBalance = summary.wallet - summary.totalIncome + summary.totalExpense;
+  // Opening balance calculation (bank style)
+  const openingBalance =
+    summary.wallet - summary.totalIncome + summary.totalExpense;
 
   doc.setFontSize(11);
-  doc.text(`Opening Balance: ৳ ${openingBalance}`, 18, y + 10);
-  doc.text(`Total Credit (Income): ৳ ${summary.totalIncome}`, 18, y + 18);
-  doc.text(`Total Debit (Expense): ৳ ${summary.totalExpense}`, 18, y + 26);
+  doc.text(`Opening Balance: ${formatBDT(openingBalance)}`, 18, y + 10);
+  doc.text(`Total Credit: ${formatBDT(summary.totalIncome)}`, 18, y + 18);
+  doc.text(`Total Debit: ${formatBDT(summary.totalExpense)}`, 18, y + 26);
 
   doc.setFont("helvetica", "bold");
   doc.text(
-    `Closing Balance: ৳ ${summary.wallet}`,
-    pageWidth - 90,
+    `Closing Balance: ${formatBDT(summary.wallet)}`,
+    pageWidth - 95,
     y + 18
   );
   doc.setFont("helvetica", "normal");
 
-  // ================= TRANSACTION TABLE =================
-  let balance = openingBalance;
+  /* ================= TRANSACTION TABLE ================= */
+  let runningBalance = openingBalance;
 
   const tableRows = transactions.map((t) => {
-    if (t.type === "Income") balance += t.amount;
-    else balance -= t.amount;
+    if (t.type === "Income") runningBalance += t.amount;
+    else runningBalance -= t.amount;
 
     return [
       t.date.slice(0, 10),
       t.title,
-      t.type === "Expense" ? `৳ ${t.amount}` : "",
-      t.type === "Income" ? `৳ ${t.amount}` : "",
-      `৳ ${balance}`,
+      t.type === "Expense" ? formatBDT(t.amount) : "",
+      t.type === "Income" ? formatBDT(t.amount) : "",
+      formatBDT(runningBalance),
     ];
   });
 
@@ -129,22 +132,33 @@ const exportPDF = () => {
     head: [["Date", "Description", "Debit", "Credit", "Balance"]],
     body: tableRows,
     theme: "grid",
+
     styles: {
       fontSize: 10,
-      cellPadding: 3,
+      cellPadding: 4,
+      valign: "middle",
     },
+
     headStyles: {
-      fillColor: [30, 64, 175], // Deep bank blue
+      fillColor: [30, 64, 175], // Bank blue
       textColor: 255,
+      fontStyle: "bold",
       halign: "center",
     },
+
     columnStyles: {
+      0: { halign: "center", cellWidth: 28 },
+      1: { halign: "left", cellWidth: 55 },
       2: { halign: "right" },
       3: { halign: "right" },
-      4: { halign: "right" },
+      4: { halign: "right", fontStyle: "bold" },
     },
-    didDrawPage: (data) => {
-      // FOOTER
+
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
+    },
+
+    didDrawPage: () => {
       doc.setFontSize(9);
       doc.text(
         "This is a system generated statement. No signature required.",
@@ -160,6 +174,7 @@ const exportPDF = () => {
     },
   });
 
+  /* ================= SAVE ================= */
   doc.save(`MoneyMap_Official_Statement_${month}.pdf`);
 };
 
