@@ -31,7 +31,7 @@ const COLORS = [
 ];
 
 const formatCurrency = (n) =>
-  n == null ? "৳ 0" : ৳ ${Number(n).toLocaleString()};
+  n == null ? "৳ 0" : `৳ ${Number(n).toLocaleString()}`;
 
 const Reports = () => {
   const token = localStorage.getItem("token");
