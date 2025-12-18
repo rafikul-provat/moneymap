@@ -30,8 +30,12 @@ const COLORS = [
   "#8B5CF6", // Violet
 ];
 
-const formatCurrency = (n) =>
-  n == null ? "৳ 0" : `৳ ${Number(n).toLocaleString()}`;
+const formatBDT = (n) => {
+  const value = Number(n);
+  if (isNaN(value)) return "BDT 0";
+  return `BDT ${value.toLocaleString("en-IN")}`;
+};
+
 
 const Reports = () => {
   const token = localStorage.getItem("token");
