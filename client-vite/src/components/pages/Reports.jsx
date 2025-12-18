@@ -59,11 +59,14 @@ const exportPDF = () => {
   }
 
   const doc = new jsPDF("p", "mm", "a4");
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
   let y = 15;
 
-  // ---------------- HEADER ----------------
-  doc.setFontSize(18);
+  // ================= HEADER =================
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
   doc.text("Money Map", 14, y);
 
   doc.setFontSize(12);
@@ -77,24 +80,38 @@ const exportPDF = () => {
   y += 6;
   doc.text(`Generated On: ${new Date().toLocaleDateString()}`, 14, y);
 
-  // ---------------- SUMMARY BOX ----------------
-  y += 10;
-  doc.setDrawColor(0);
-  doc.rect(14, y, 182, 26);
-
-  doc.setFontSize(11);
-  doc.text(`Total Income: ৳ ${summary.totalIncome}`, 18, y + 8);
-  doc.text(`Total Expense: ৳ ${summary.totalExpense}`, 18, y + 15);
-
+  y += 6;
   doc.text(
-    `Closing Balance: ৳ ${summary.wallet}`,
-    120,
-    y + 12
+    `Statement ID: MM-${month.replace("-", "")}-${Date.now().toString().slice(-4)}`,
+    14,
+    y
   );
 
-  // ---------------- TRANSACTION TABLE ----------------
-  let balance = 0;
-  const tableData = transactions.map((t) => {
+  // ================= SUMMARY BOX =================
+  y += 10;
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.5);
+  doc.rect(14, y, pageWidth - 28, 32);
+
+  const openingBalance = summary.wallet - summary.totalIncome + summary.totalExpense;
+
+  doc.setFontSize(11);
+  doc.text(`Opening Balance: ৳ ${openingBalance}`, 18, y + 10);
+  doc.text(`Total Credit (Income): ৳ ${summary.totalIncome}`, 18, y + 18);
+  doc.text(`Total Debit (Expense): ৳ ${summary.totalExpense}`, 18, y + 26);
+
+  doc.setFont("helvetica", "bold");
+  doc.text(
+    `Closing Balance: ৳ ${summary.wallet}`,
+    pageWidth - 90,
+    y + 18
+  );
+  doc.setFont("helvetica", "normal");
+
+  // ================= TRANSACTION TABLE =================
+  let balance = openingBalance;
+
+  const tableRows = transactions.map((t) => {
     if (t.type === "Income") balance += t.amount;
     else balance -= t.amount;
 
@@ -108,15 +125,16 @@ const exportPDF = () => {
   });
 
   autoTable(doc, {
-    startY: y + 35,
+    startY: y + 40,
     head: [["Date", "Description", "Debit", "Credit", "Balance"]],
-    body: tableData,
+    body: tableRows,
+    theme: "grid",
     styles: {
       fontSize: 10,
       cellPadding: 3,
     },
     headStyles: {
-      fillColor: [37, 99, 235], // Bank blue
+      fillColor: [30, 64, 175], // Deep bank blue
       textColor: 255,
       halign: "center",
     },
@@ -125,20 +143,25 @@ const exportPDF = () => {
       3: { halign: "right" },
       4: { halign: "right" },
     },
-    theme: "grid",
+    didDrawPage: (data) => {
+      // FOOTER
+      doc.setFontSize(9);
+      doc.text(
+        "This is a system generated statement. No signature required.",
+        14,
+        pageHeight - 10
+      );
+
+      doc.text(
+        `Page ${doc.internal.getNumberOfPages()}`,
+        pageWidth - 30,
+        pageHeight - 10
+      );
+    },
   });
 
-  // ---------------- FOOTER ----------------
-  doc.setFontSize(9);
-  doc.text(
-    "This is a system generated statement. No signature is required.",
-    14,
-    290
-  );
-
-  doc.save(`MoneyMap_Statement_${month}.pdf`);
+  doc.save(`MoneyMap_Official_Statement_${month}.pdf`);
 };
-
 
 
   // ---------------- LOAD REPORT ----------------
