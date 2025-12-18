@@ -30,7 +30,7 @@ const COLORS = [
   "#8B5CF6", // Violet
 ];
 
-const formatCurrency = (n) => n == null ? "BDT 0" : ৳ ${Number(n).toLocaleString()};
+const formatCurrency = (n) => n == null ? "৳ 0" : ৳ ${Number(n).toLocaleString()};
 
 
 const Reports = () => {
