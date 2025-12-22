@@ -33,15 +33,15 @@ const COLORS = [
 const formatCurrency = (n) =>
   n == null ? "BDT 0" : `BDT ${Number(n).toLocaleString()}`;
 
+const formatPDFMoney = (n) =>
+  n == null ? "BDT 0" : `BDT ${Number(n).toLocaleString()}`;
+
 const Reports = () => {
   const token = localStorage.getItem("token");
 
   const [month, setMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}`;
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
 
   const [transactions, setTransactions] = useState([]);
@@ -52,134 +52,121 @@ const Reports = () => {
     wallet: 0,
   });
   const [loading, setLoading] = useState(false);
-const exportPDF = () => {
-  if (!transactions.length) {
-    alert("No data to export");
-    return;
-  }
 
-  const doc = new jsPDF("p", "mm", "a4");
-  const pageWidth = doc.internal.pageSize.width;
+  /* ======================= EXPORT PDF ======================= */
+  const exportPDF = () => {
+    if (!transactions.length) {
+      alert("No data to export");
+      return;
+    }
 
-  let y = 15;
+    const doc = new jsPDF("p", "mm", "a4");
+    doc.setCharSpace(0); // FIX digit spacing
 
-  /* ---------------- COMPANY NAME ---------------- */
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
-  doc.text("Money Map", pageWidth - 14, y, { align: "right" });
+    const pageWidth = doc.internal.pageSize.width;
+    let y = 15;
 
-  /* ---------------- TITLE ---------------- */
-  y += 18;
-  doc.setFontSize(16);
-  doc.text("Statement of Accounts", pageWidth - 14, y, { align: "right" });
+    /* ---------- HEADER ---------- */
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Money Map", pageWidth - 14, y, { align: "right" });
 
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  y += 6;
-  doc.text(`Period: ${month}`, pageWidth - 14, y, { align: "right" });
+    y += 8;
+    doc.setFontSize(12);
+    doc.text("Statement of Accounts", pageWidth - 14, y, { align: "right" });
 
-  /* ---------------- TO SECTION ---------------- */
-  let leftY = 45;
-  doc.setFontSize(10);
-  doc.text("To,", 14, leftY);
-  leftY += 5;
-  doc.text("Customer Name", 14, leftY);
-  leftY += 5;
-  doc.text("Dhaka, Bangladesh", 14, leftY);
+    y += 6;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Period: ${month}`, pageWidth - 14, y, { align: "right" });
 
-  /* ---------------- ACCOUNT SUMMARY BOX ---------------- */
-  let boxY = 45;
-  doc.setDrawColor(150);
-  doc.rect(pageWidth - 90, boxY, 76, 36);
+    /* ---------- TO ---------- */
+    let leftY = 45;
+    doc.text("To,", 14, leftY);
+    doc.text("Customer Name", 14, (leftY += 5));
+    doc.text("Dhaka, Bangladesh", 14, (leftY += 5));
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Account Summary", pageWidth - 86, boxY + 6);
+    /* ---------- SUMMARY BOX ---------- */
+    const boxY = 45;
+    doc.setDrawColor(120);
+    doc.rect(pageWidth - 90, boxY, 76, 30);
 
-  doc.setFont("helvetica", "normal");
-  doc.text("Opening Balance", pageWidth - 86, boxY + 13);
-  doc.text("৳ 0.00", pageWidth - 18, boxY + 13, { align: "right" });
+    doc.setFont("helvetica", "bold");
+    doc.text("Account Summary", pageWidth - 86, boxY + 6);
 
-  doc.text("Total Income", pageWidth - 86, boxY + 20);
-  doc.text(`৳ ${summary.totalIncome}`, pageWidth - 18, boxY + 20, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Opening Balance", pageWidth - 86, boxY + 12);
+    doc.text("BDT 0.00", pageWidth - 18, boxY + 12, { align: "right" });
 
-  doc.text("Total Expense", pageWidth - 86, boxY + 27);
-  doc.text(`৳ ${summary.totalExpense}`, pageWidth - 18, boxY + 27, { align: "right" });
+    doc.text("Total Income", pageWidth - 86, boxY + 18);
+    doc.text(formatPDFMoney(summary.totalIncome), pageWidth - 18, boxY + 18, {
+      align: "right",
+    });
 
-  doc.setFont("helvetica", "bold");
-  doc.text("Balance Due", pageWidth - 86, boxY + 34);
-  doc.text(`৳ ${summary.wallet}`, pageWidth - 18, boxY + 34, {
-    align: "right",
-  });
+    doc.text("Total Expense", pageWidth - 86, boxY + 24);
+    doc.text(formatPDFMoney(summary.totalExpense), pageWidth - 18, boxY + 24, {
+      align: "right",
+    });
 
-  /* ---------------- TABLE DATA ---------------- */
-  let balance = 0;
-  const tableData = [];
+    doc.setFont("helvetica", "bold");
+    doc.text("Balance Due", pageWidth - 86, boxY + 30);
+    doc.text(formatPDFMoney(summary.wallet), pageWidth - 18, boxY + 30, {
+      align: "right",
+    });
 
-  // Opening balance row
-  tableData.push([
-    month + "-01",
-    "Opening Balance",
-    "",
-    "",
-    "৳ 0.00",
-  ]);
+    /* ---------- TABLE DATA ---------- */
+    let balance = 0;
+    const tableData = [
+      [`${month}-01`, "Opening Balance", "", "", "BDT 0.00"],
+    ];
 
-  transactions.forEach((t) => {
-    if (t.type === "Income") balance += t.amount;
-    else balance -= t.amount;
+    transactions.forEach((t) => {
+      balance += t.type === "Income" ? t.amount : -t.amount;
+      tableData.push([
+        t.date.slice(0, 10),
+        t.title,
+        t.type === "Expense" ? formatPDFMoney(t.amount) : "",
+        t.type === "Income" ? formatPDFMoney(t.amount) : "",
+        formatPDFMoney(balance),
+      ]);
+    });
 
-    tableData.push([
-      t.date.slice(0, 10),
-      t.title,
-      t.type === "Expense" ? `৳ ${t.amount}` : "",
-      t.type === "Income" ? `৳ ${t.amount}` : "",
-      `৳ ${balance}`,
-    ]);
-  });
+    /* ---------- TABLE ---------- */
+    autoTable(doc, {
+      startY: 90,
+      head: [["Date", "Description", "Debit", "Credit", "Balance"]],
+      body: tableData,
+      theme: "grid",
+      styles: {
+        fontSize: 10,
+        cellPadding: 4,
+        valign: "middle",
+      },
+      headStyles: {
+        fillColor: [60, 60, 60],
+        textColor: 255,
+        halign: "center",
+      },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 30, halign: "right" },
+        3: { cellWidth: 30, halign: "right" },
+        4: { cellWidth: 32, halign: "right" },
+      },
+    });
 
-  /* ---------------- TRANSACTION TABLE ---------------- */
-  autoTable(doc, {
-    startY: 90,
-    head: [["Date", "Transactions", "Debit", "Credit", "Balance"]],
-    body: tableData,
-    theme: "grid",
-    styles: {
-      fontSize: 9,
-      cellPadding: 3,
-    },
-    headStyles: {
-      fillColor: [60, 60, 60],
-      textColor: 255,
-      halign: "center",
-    },
-    columnStyles: {
-      2: { halign: "right" },
-      3: { halign: "right" },
-      4: { halign: "right" },
-    },
-  });
+    /* ---------- FOOTER ---------- */
+    doc.setFontSize(9);
+    doc.text(
+      "This is a system generated statement. No signature is required.",
+      pageWidth / 2,
+      290,
+      { align: "center" }
+    );
 
-  /* ---------------- FINAL BALANCE ---------------- */
-  const finalY = doc.lastAutoTable.finalY + 10;
-  doc.setFont("helvetica", "bold");
-  doc.text("Balance Due", pageWidth - 50, finalY);
-  doc.text(`৳ ${summary.wallet}`, pageWidth - 14, finalY, {
-    align: "right",
-  });
-
-  /* ---------------- FOOTER ---------------- */
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.text(
-    "This is a system generated statement. No signature is required.",
-    pageWidth / 2,
-    290,
-    { align: "center" }
-  );
-
-  doc.save(`MoneyMap_Statement_${month}.pdf`);
-};
-
+    doc.save(`MoneyMap_Statement_${month}.pdf`);
+  };
 
 
   // ---------------- LOAD REPORT ----------------
