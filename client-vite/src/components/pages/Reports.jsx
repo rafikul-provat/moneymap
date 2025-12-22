@@ -96,18 +96,18 @@ const Reports = () => {
 
     doc.setFont("helvetica", "normal");
 
-    doc.text("Total Income", pageWidth - 86, boxY + 18);
+    doc.text("Total Income", pageWidth - 86, boxY + 12);
     doc.text(formatPDFMoney(summary.totalIncome), pageWidth - 18, boxY + 12, {
       align: "right",
     });
 
-    doc.text("Total Expense", pageWidth - 86, boxY + 24);
+    doc.text("Total Expense", pageWidth - 86, boxY + 18);
     doc.text(formatPDFMoney(summary.totalExpense), pageWidth - 18, boxY + 18, {
       align: "right",
     });
 
     doc.setFont("helvetica", "bold");
-    doc.text("Balance Due", pageWidth - 86, boxY + 30);
+    doc.text("Balance Due", pageWidth - 86, boxY + 24);
     doc.text(formatPDFMoney(summary.wallet), pageWidth - 18, boxY + 24, {
       align: "right",
     });
