@@ -83,7 +83,7 @@ const Reports = () => {
     /* ---------- TO ---------- */
     let leftY = 45;
     doc.text("To,", 14, leftY);
-    doc.text("Customer Name", 14, (leftY += 5));
+    doc.text("Customer", 14, (leftY += 5));
     doc.text("Dhaka, Bangladesh", 14, (leftY += 5));
 
     /* ---------- SUMMARY BOX ---------- */
@@ -95,8 +95,6 @@ const Reports = () => {
     doc.text("Account Summary", pageWidth - 86, boxY + 6);
 
     doc.setFont("helvetica", "normal");
-    doc.text("Opening Balance", pageWidth - 86, boxY + 12);
-    doc.text("BDT 0.00", pageWidth - 18, boxY + 12, { align: "right" });
 
     doc.text("Total Income", pageWidth - 86, boxY + 18);
     doc.text(formatPDFMoney(summary.totalIncome), pageWidth - 18, boxY + 18, {
